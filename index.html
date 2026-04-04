@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Gastos</title>
+  <meta name="theme-color" content="#1D2939">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mis Gastos">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LOGIN
+══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Control de Gastos</div>
+    <div class="login-sub">Inicia sesión para continuar</div>
+
+    <div class="login-field">
+      <label class="login-label">Correo electrónico</label>
+      <input class="login-input" type="email" id="login-email" placeholder="tu@email.com"
+        onkeydown="if(event.key==='Enter') document.getElementById('login-pass').focus()">
+    </div>
+
+    <div class="login-field">
+      <label class="login-label">Contraseña</label>
+      <input class="login-input" type="password" id="login-pass" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') window.doLogin()">
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="window.doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-forgot">¿Olvidaste tu contraseña? Pídele al Admin Supremo que la resetee.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SYNC INDICATOR
+══════════════════════════════════════ -->
+<div id="sync-status" class="ok" style="display:none">
+  <div class="sync-dot"></div>
+  <span id="sync-txt">Sincronizado</span>
+</div>
+
+<!-- ══════════════════════════════════════
+     APP
+══════════════════════════════════════ -->
+<div class="app" id="main-app" style="display:none">
+
+  <!-- ── SIDEBAR DESKTOP ── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+      <h1>Control de Gastos</h1>
+      <p id="header-mes">—</p>
+    </div>
+
+    <div class="sidebar-user">
+      <span class="sidebar-user-email" id="user-email-label">—</span>
+      <button class="btn-logout" onclick="window.doLogout()">Salir</button>
+    </div>
+
+    <div class="mes-control">
+      <label>Mes activo</label>
+      <div class="mes-nav-row">
+        <button onclick="window.navMes(-1)">&#8592;</button>
+        <select id="sel-mes" onchange="window.cargarMes(this.value)"></select>
+        <button onclick="window.navMes(1)">&#8594;</button>
+      </div>
+      <button class="btn-nuevo-mes" onclick="window.abrirNuevoMes()">+ Nuevo mes</button>
+    </div>
+
+    <div class="sidebar-metrics">
+      <div class="metric-row">
+        <span class="mlabel">Ingreso total</span>
+        <span class="mval verde" id="t-ingreso">$0</span>
+      </div>
+      <hr class="metric-divider">
+      <div class="metric-row">
+        <span class="mlabel">Total gastos</span>
+        <span class="mval rojo" id="t-gastos">$0</span>
+      </div>
+      <hr class="metric-divider">
+      <div class="metric-row">
+        <span class="mlabel">Saldo</span>
+        <span class="mval" id="t-saldo">$0</span>
+      </div>
+    </div>
+
+    <div class="ahorro-bar">
+      <div class="ahorro-bar-label">
+        <span>% Ahorro</span>
+        <span id="t-pct" style="font-weight:700">0%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="bar-fill" style="width:0%;background:var(--green)"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-ingresos">
+      <div class="sidebar-section-title">Ingresos del mes</div>
+      <div id="ingresos-grid"></div>
+      <div class="ing-add-btns">
+        <button class="btn-add-ing" onclick="window.agregarIngreso('Sueldo','')">+ Sueldo</button>
+        <button class="btn-add-ing" onclick="window.agregarIngreso('Bono','')">+ Bono</button>
+        <button class="btn-add-ing" onclick="window.agregarIngresoCustom()">+ Otro</button>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn-action" onclick="window.copiarDelMesAnterior()">
+        <span class="btn-action-icon">↩</span> Copiar fijos del mes anterior
+      </button>
+      <button class="btn-action" onclick="window.exportarCSV()">
+        <span class="btn-action-icon">↓</span> Exportar CSV
+      </button>
+      <button class="btn-del-mes" onclick="window.eliminarMesActual()">Eliminar mes</button>
+      <p class="sidebar-note">Datos sincronizados con la nube ☁</p>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- Topbar móvil -->
+    <div class="mobile-topbar">
+      <div class="mobile-topbar-left">
+        <h2>Control de Gastos</h2>
+        <p id="mob-mes-label">—</p>
+      </div>
+      <div class="mobile-topbar-right">
+        <div class="mob-mes-nav">
+          <button onclick="window.navMes(-1)">&#8592;</button>
+          <select id="sel-mes-mob" onchange="window.cargarMes(this.value)"></select>
+          <button onclick="window.navMes(1)">&#8594;</button>
+        </div>
+        <button class="btn-logout-mob" onclick="window.doLogout()">Salir</button>
+      </div>
+    </div>
+
+    <!-- Topbar desktop -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="main-mes-title">—</div>
+        <div class="topbar-sub">Resumen de gastos del mes</div>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="sc-label">Ingreso total</div>
+        <div class="sc-val" id="sc-ingreso" style="color:var(--green)">$0</div>
+        <div class="sc-badge badge-green">Mes activo</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Total gastos</div>
+        <div class="sc-val" id="sc-gastos" style="color:var(--red)">$0</div>
+        <div class="sc-badge badge-red" id="sc-gas-badge">0 items</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Saldo disponible</div>
+        <div class="sc-val" id="sc-saldo">$0</div>
+        <div class="sc-badge" id="sc-sal-badge">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">% Ahorro</div>
+        <div class="sc-val" id="sc-pct">0%</div>
+        <div class="sc-badge badge-blue">del ingreso</div>
+      </div>
+    </div>
+
+    <!-- Panel header -->
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Gastos del mes</div>
+        <div class="panel-subtitle">Edita montos directamente · ✓ marca como pagado</div>
+      </div>
+    </div>
+
+    <!-- Gastos grid -->
+    <div class="gastos-grid">
+
+      <div class="gasto-panel tab-active" id="panel-fijos">
+        <div class="gasto-panel-head" onclick="window.toggleSec('fijos')">
+          <div class="gph-left">
+            <div class="gph-dot dot-blue"></div>
+            <div class="gph-name">Gastos fijos</div>
+          </div>
+          <div class="gph-right">
+            <span class="gph-total" id="tot-fijos">$0</span>
+            <span class="gph-toggle" id="tog-fijos">▲</span>
+          </div>
+        </div>
+        <div class="gasto-panel-body" id="body-fijos">
+          <div id="lista-fijos"></div>
+          <div class="add-item-row">
+            <input type="text" id="add-fijos-nom" placeholder="Nombre del gasto...">
+            <input type="number" id="add-fijos-mon" class="monto-in" placeholder="Monto">
+            <button class="btn-add-item" onclick="window.addGasto('fijos')">Agregar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="gasto-panel" id="panel-varios">
+        <div class="gasto-panel-head" onclick="window.toggleSec('varios')">
+          <div class="gph-left">
+            <div class="gph-dot dot-amber"></div>
+            <div class="gph-name">Gastos varios</div>
+          </div>
+          <div class="gph-right">
+            <span class="gph-total" id="tot-varios">$0</span>
+            <span class="gph-toggle" id="tog-varios">▲</span>
+          </div>
+        </div>
+        <div class="gasto-panel-body" id="body-varios">
+          <div id="lista-varios"></div>
+          <div class="add-item-row">
+            <input type="text" id="add-varios-nom" placeholder="Nombre del gasto...">
+            <input type="number" id="add-varios-mon" class="monto-in" placeholder="Monto">
+            <button class="btn-add-item" onclick="window.addGasto('varios')">Agregar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="gasto-panel" id="panel-otros">
+        <div class="gasto-panel-head" onclick="window.toggleSec('otros')">
+          <div class="gph-left">
+            <div class="gph-dot dot-green"></div>
+            <div class="gph-name">Otros gastos</div>
+          </div>
+          <div class="gph-right">
+            <span class="gph-total" id="tot-otros">$0</span>
+            <span class="gph-toggle" id="tog-otros">▲</span>
+          </div>
+        </div>
+        <div class="gasto-panel-body" id="body-otros">
+          <div id="lista-otros"></div>
+          <div class="add-item-row">
+            <input type="text" id="add-otros-nom" placeholder="Nombre del gasto...">
+            <input type="number" id="add-otros-mon" class="monto-in" placeholder="Monto">
+            <button class="btn-add-item" onclick="window.addGasto('otros')">Agregar</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /gastos-grid -->
+
+    <!-- Panel resumen móvil -->
+    <div class="mobile-panel tab-active" id="mob-panel-resumen">
+      <div class="mob-resumen-cards">
+        <div class="mob-card"><div class="mc-label">Ingreso</div><div class="mc-val verde" id="mob-ingreso">$0</div></div>
+        <div class="mob-card"><div class="mc-label">Gastos</div><div class="mc-val rojo"  id="mob-gastos">$0</div></div>
+        <div class="mob-card"><div class="mc-label">Saldo</div><div class="mc-val"        id="mob-saldo">$0</div></div>
+        <div class="mob-card"><div class="mc-label">Ahorro</div><div class="mc-val"       id="mob-pct">0%</div></div>
+      </div>
+      <div class="mob-bar-wrap">
+        <div class="mob-bar-label">
+          <span>Progreso de ahorro</span>
+          <span id="mob-pct2">0%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="mob-bar-fill" style="width:0%;background:var(--green)"></div>
+        </div>
+      </div>
+      <div class="mob-ing-wrap">
+        <div class="mob-ing-title">Ingresos del mes</div>
+        <div id="mob-ingresos-grid"></div>
+        <div class="ing-add-btns">
+          <button class="btn-add-ing" style="background:var(--faint);border-color:var(--border);color:var(--text)" onclick="window.agregarIngreso('Sueldo','')">+ Sueldo</button>
+          <button class="btn-add-ing" style="background:var(--faint);border-color:var(--border);color:var(--text)" onclick="window.agregarIngreso('Bono','')">+ Bono</button>
+          <button class="btn-add-ing" style="background:var(--faint);border-color:var(--border);color:var(--text)" onclick="window.agregarIngresoCustom()">+ Otro</button>
+        </div>
+      </div>
+      <button class="mob-nuevo-mes" onclick="window.abrirNuevoMes()">+ Nuevo mes</button>
+      <div class="mob-acciones">
+        <button class="btn-action" onclick="window.copiarDelMesAnterior()"><span class="btn-action-icon">↩</span> Copiar fijos del mes anterior</button>
+        <button class="btn-action" onclick="window.exportarCSV()"><span class="btn-action-icon">↓</span> Exportar CSV</button>
+        <button class="btn-del-mes" onclick="window.eliminarMesActual()">Eliminar mes</button>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /app -->
+
+<!-- Bottom nav móvil -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
+  <button class="bnav-item active" id="bnav-resumen" onclick="window.switchMobTab('resumen')">
+    <span class="bnav-icon">📊</span><span>Resumen</span><div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" id="bnav-fijos" onclick="window.switchMobTab('fijos')">
+    <span class="bnav-icon">📌</span><span>Fijos</span><div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" id="bnav-varios" onclick="window.switchMobTab('varios')">
+    <span class="bnav-icon">📋</span><span>Varios</span><div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" id="bnav-otros" onclick="window.switchMobTab('otros')">
+    <span class="bnav-icon">💸</span><span>Otros</span><div class="bnav-dot"></div>
+  </button>
+</nav>
+
+<!-- Entry point -->
+<script type="module" src="js/main.js"></script>
+
+</body>
+</html>
