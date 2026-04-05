@@ -2,14 +2,15 @@
 // Estado central y lógica de negocio
 
 import { setUserId, cargarTodosLosMeses, guardarMes, eliminarMes } from "./db.js";
-import { poblarSelector, renderIngresos, renderSeccion, recalcular, fmt, escHtml } from "./ui.js";
+import { poblarSelector, renderIngresos, renderSeccion, recalcular } from "./ui.js";
+import { revisarAlertas } from "./notifications.js";
 
 // ── Estado ──
-let datos     = {};
-let mesActual = '';
-let saveTimer = null;
+let datos      = {};
+let mesActual  = '';
+let saveTimer  = null;
+let userEmail  = '';
 
-// ── Helpers de fecha ──
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 function parseMes(s) {
@@ -31,14 +32,13 @@ export function mesVacio() {
   return { ingresos: [], fijos: [], varios: [], otros: [] };
 }
 
-// ── Guardar con debounce (no spamear Firebase en cada tecla) ──
 function autoGuardar() {
   recalcular(datos, mesActual);
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => guardarMes(mesActual, datos[mesActual]), 1200);
 }
 
-// ── Cargar mes en pantalla ──
+// ── Cargar mes ──
 export function cargarMes(mes) {
   mesActual = mes;
   if (!datos[mes]) datos[mes] = mesVacio();
@@ -50,12 +50,10 @@ export function cargarMes(mes) {
   recalcular(datos, mesActual);
 }
 
-// ── Navegación entre meses ──
 export function navMes(dir) {
   if (!mesActual) return;
   const lista = mesesOrdenados();
-  const idx   = lista.indexOf(mesActual);
-  const n     = idx + dir;
+  const n = lista.indexOf(mesActual) + dir;
   if (n >= 0 && n < lista.length) cargarMes(lista[n]);
 }
 
@@ -76,7 +74,7 @@ export function agregarIngreso(nombre, monto) {
   renderIngresos(datos, mesActual);
 }
 export function agregarIngresoCustom() {
-  const n = prompt('Nombre del ingreso (ej: Freelance, Arriendo):');
+  const n = prompt('Nombre del ingreso:');
   if (!n) return;
   agregarIngreso(n.trim(), 0);
 }
@@ -106,35 +104,65 @@ export function addGasto(sec) {
   const mon    = document.getElementById('add-' + sec + '-mon');
   const nombre = nom.value.trim();
   if (!nombre) { nom.focus(); return; }
-  datos[mesActual][sec].push({ nombre, monto: Number(mon.value) || 0, pagado: false });
-  nom.value = '';
-  mon.value = '';
+  datos[mesActual][sec].push({
+    nombre, monto: Number(mon.value) || 0,
+    pagado: false, descripcion: '', diaLimite: null, alertaEmail: false
+  });
+  nom.value = ''; mon.value = '';
   autoGuardar();
   renderSeccion(datos, mesActual, sec);
   nom.focus();
 }
 
+// ── Modal detalle ──
+export function abrirDetalle(sec, i) {
+  const g = datos[mesActual][sec][i];
+  document.getElementById('det-titulo').textContent  = g.nombre;
+  document.getElementById('det-desc').value          = g.descripcion  || '';
+  document.getElementById('det-dia').value           = g.diaLimite    || '';
+  document.getElementById('det-alerta').checked      = g.alertaEmail  || false;
+  document.getElementById('det-sec').value           = sec;
+  document.getElementById('det-idx').value           = i;
+  document.getElementById('modal-detalle').style.display = 'flex';
+}
+export function cerrarDetalle() {
+  document.getElementById('modal-detalle').style.display = 'none';
+}
+export function guardarDetalle() {
+  const sec    = document.getElementById('det-sec').value;
+  const i      = parseInt(document.getElementById('det-idx').value);
+  const desc   = document.getElementById('det-desc').value.trim();
+  const dia    = parseInt(document.getElementById('det-dia').value) || null;
+  const alerta = document.getElementById('det-alerta').checked;
+
+  if (dia !== null && (dia < 1 || dia > 31)) {
+    alert('El día debe ser entre 1 y 31'); return;
+  }
+  datos[mesActual][sec][i].descripcion = desc;
+  datos[mesActual][sec][i].diaLimite   = dia;
+  datos[mesActual][sec][i].alertaEmail = alerta;
+  autoGuardar();
+  renderSeccion(datos, mesActual, sec);
+  cerrarDetalle();
+}
+
 // ── Nuevo mes ──
 export function abrirNuevoMes() {
-  const ahora     = new Date();
-  const sugeridos = [];
+  const ahora = new Date(); const sugeridos = [];
   for (let i = -1; i <= 4; i++) {
-    const d   = new Date(ahora.getFullYear(), ahora.getMonth() + i, 1);
+    const d = new Date(ahora.getFullYear(), ahora.getMonth() + i, 1);
     const str = formatMes(d);
     if (!datos[str]) sugeridos.push(str);
   }
   const sel = prompt('Escribe el mes (ej: May 2026)\nDisponibles:\n' + sugeridos.join('\n'));
   if (!sel) return;
-  const mes   = sel.trim();
-  const parts = mes.split(' ');
-  if (parts.length !== 2 || !MESES.includes(parts[0]) || isNaN(parseInt(parts[1]))) {
-    return alert('Formato inválido. Usa: Mes YYYY (ej: May 2026)');
-  }
+  const mes = sel.trim(); const parts = mes.split(' ');
+  if (parts.length !== 2 || !MESES.includes(parts[0]) || isNaN(parseInt(parts[1])))
+    return alert('Formato inválido. Usa: Mes YYYY');
   if (!datos[mes]) datos[mes] = mesVacio();
   guardarMes(mes, datos[mes]).then(() => cargarMes(mes));
 }
 
-// ── Eliminar mes ──
 export function eliminarMesActual() {
   if (!mesActual) return;
   if (!confirm(`¿Eliminar "${mesActual}" y todos sus datos?`)) return;
@@ -145,7 +173,6 @@ export function eliminarMesActual() {
   else { mesActual = ''; poblarSelector([], ''); }
 }
 
-// ── Copiar fijos del mes anterior ──
 export function copiarDelMesAnterior() {
   if (!mesActual) return;
   const ant = mesAnterior(mesActual);
@@ -159,38 +186,38 @@ export function copiarDelMesAnterior() {
   renderSeccion(datos, mesActual, 'fijos');
 }
 
-// ── Exportar CSV ──
 export function exportarCSV() {
   const meses = mesesOrdenados();
-  let csv = 'Mes,Tipo,Nombre,Monto\n';
+  let csv = 'Mes,Tipo,Nombre,Monto,Descripcion,DiaLimite\n';
   meses.forEach(mes => {
     const d = datos[mes];
-    (d.ingresos || []).forEach(x => csv += `${mes},Ingreso,${x.nombre},${x.monto}\n`);
-    (d.fijos    || []).forEach(x => csv += `${mes},Fijo,${x.nombre},${x.monto}\n`);
-    (d.varios   || []).forEach(x => csv += `${mes},Varios,${x.nombre},${x.monto}\n`);
-    (d.otros    || []).forEach(x => csv += `${mes},Otros,${x.nombre},${x.monto}\n`);
+    (d.ingresos || []).forEach(x => csv += `${mes},Ingreso,${x.nombre},${x.monto},,\n`);
+    ['fijos','varios','otros'].forEach(sec =>
+      (d[sec] || []).forEach(x =>
+        csv += `${mes},${sec},${x.nombre},${x.monto},${x.descripcion||''},${x.diaLimite||''}\n`
+      )
+    );
   });
-  const a   = document.createElement('a');
-  a.href    = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-  a.download = 'gastos_export.csv';
-  a.click();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'gastos_export.csv'; a.click();
 }
 
-// ── Init (llamado desde auth.js cuando hay usuario) ──
-export async function initApp(uid) {
+// ── Init ──
+export async function initApp(uid, email) {
+  userEmail = email;
   setUserId(uid);
   datos = await cargarTodosLosMeses();
   const lista = mesesOrdenados();
   if (lista.length) cargarMes(lista[lista.length - 1]);
+  revisarAlertas(datos, userEmail).catch(console.error);
 }
 
-// ── Reset (llamado desde auth.js al cerrar sesión) ──
 export function resetApp() {
-  datos     = {};
-  mesActual = '';
+  datos = {}; mesActual = ''; userEmail = '';
 }
 
-// ── Exponer funciones al HTML (onclick en botones) ──
+// ── Exponer al HTML ──
 window.cargarMes            = cargarMes;
 window.navMes               = navMes;
 window.agregarIngreso       = agregarIngreso;
@@ -200,11 +227,13 @@ window.abrirNuevoMes        = abrirNuevoMes;
 window.eliminarMesActual    = eliminarMesActual;
 window.copiarDelMesAnterior = copiarDelMesAnterior;
 window.exportarCSV          = exportarCSV;
-
-// Handlers inline de inputs (onchange/oninput en HTML generado dinámicamente)
-window._setIng  = (i, v)       => setIngreso(i, v);
-window._delIng  = (i)          => delIngreso(i);
-window._setNom  = (s, i, v)    => setNombre(s, i, v);
-window._setMon  = (s, i, v)    => setMonto(s, i, v);
-window._togPag  = (s, i)       => togglePagado(s, i);
-window._delGas  = (s, i)       => delGasto(s, i);
+window.abrirDetalle         = abrirDetalle;
+window.cerrarDetalle        = cerrarDetalle;
+window.guardarDetalle       = guardarDetalle;
+window._setIng  = (i, v)    => setIngreso(i, v);
+window._delIng  = (i)       => delIngreso(i);
+window._setNom  = (s, i, v) => setNombre(s, i, v);
+window._setMon  = (s, i, v) => setMonto(s, i, v);
+window._togPag  = (s, i)    => togglePagado(s, i);
+window._delGas  = (s, i)    => delGasto(s, i);
+window._detalle = (s, i)    => abrirDetalle(s, i);

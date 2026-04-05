@@ -34,7 +34,7 @@
 
     <button class="login-btn" id="login-btn" onclick="window.doLogin()">Entrar</button>
     <div class="login-error" id="login-error"></div>
-    <div class="login-forgot">¿Olvidaste tu contraseña? Pídele al Admin Supremo que la resetee.</div>
+    <div class="login-forgot">¿Olvidaste tu contraseña? Pídele a Tomás que la resetee.</div>
   </div>
 </div>
 
@@ -287,6 +287,48 @@
 
   </main>
 </div><!-- /app -->
+
+<!-- ══════════════════════════════════════
+     MODAL DETALLE
+══════════════════════════════════════ -->
+<div id="modal-detalle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-titulo" id="det-titulo">Detalle</span>
+      <button class="btn-modal-close" onclick="window.cerrarDetalle()">×</button>
+    </div>
+
+    <div class="modal-field">
+      <label class="modal-label">Descripción</label>
+      <textarea class="modal-input modal-textarea" id="det-desc" placeholder="Ej: Cuota celular, vence el 15 de cada mes..."></textarea>
+    </div>
+
+    <div class="modal-field">
+      <label class="modal-label">Día límite de pago (del mes)</label>
+      <input class="modal-input" type="number" id="det-dia" placeholder="Ej: 15" min="1" max="31">
+      <p class="modal-hint">Si ingresas un día, recibirás alertas cuando se acerque la fecha.</p>
+    </div>
+
+    <div class="modal-field">
+      <label class="modal-check-row">
+        <input type="checkbox" id="det-alerta">
+        <div>
+          <div class="modal-check-label">Activar alerta por email</div>
+          <div class="modal-check-sub">Te avisamos cuando queden 3, 1 días y el día del vencimiento</div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Campos ocultos para identificar el gasto -->
+    <input type="hidden" id="det-sec">
+    <input type="hidden" id="det-idx">
+
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="window.cerrarDetalle()">Cancelar</button>
+      <button class="btn-modal-save"   onclick="window.guardarDetalle()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Bottom nav móvil -->
 <nav class="bottom-nav" id="bottom-nav" style="display:none">
