@@ -2,7 +2,7 @@
 // Lógica de alertas por email usando EmailJS
 
 const EMAILJS_PUBLIC_KEY  = 'dFObvu1IN2Aa95pdp';
-const EMAILJS_SERVICE_ID  = 'service_8b5rsqg';
+const EMAILJS_SERVICE_ID  = 'service_5frdfpj';
 const EMAILJS_TEMPLATE_ID = 'template_oyupw9r';
 
 // Carga el SDK de EmailJS dinámicamente
