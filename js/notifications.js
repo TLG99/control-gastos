@@ -36,7 +36,6 @@ export function diasRestantes(diaLimite) {
 function construirMensaje(nombre, dias) {
   if (dias === 0) return `Hoy es el último día para pagar ${nombre}. ¡No lo dejes pasar!`;
   if (dias === 1) return `Mañana vence el pago de ${nombre}. Tienes 1 día.`;
-  if (dias <= 3)  return `Quedan solo ${dias} días para pagar ${nombre}.`;
   return `Faltan ${dias} días para pagar ${nombre}.`;
 }
 
@@ -46,18 +45,22 @@ export async function enviarAlerta(userEmail, gastoNombre, dias) {
   const params = {
     to_email:        userEmail,
     gasto_nombre:    gastoNombre,
-    dias_restantes:  dias === 0 ? '¡Hoy vence!' : dias === 1 ? 'Vence mañana' : `${dias} días restantes`,
+    dias_restantes:  dias === 0 ? '¡Hoy vence!' : 'Vence mañana',
     mensaje:         construirMensaje(gastoNombre, dias),
   };
   return window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
 }
 
 // ── Revisar todos los gastos con fecha límite y enviar alertas ──
-// Se llama al cargar la app. Evita spam guardando en localStorage la última vez que se envió.
+// Solo envía alertas cuando quedan 0 o 1 días.
+// Guarda en localStorage la fecha de último envío por alerta para no duplicar en el mismo día.
 export async function revisarAlertas(datos, userEmail) {
-  const hoy      = new Date().toDateString();
+  const hoy      = new Date().toDateString(); // Ej: "Sun Apr 12 2026"
   const cacheKey = `alertas_enviadas_${userEmail}`;
-  const cache    = JSON.parse(localStorage.getItem(cacheKey) || '{}');
+  let cache      = {};
+  try {
+    cache = JSON.parse(localStorage.getItem(cacheKey) || '{}');
+  } catch { cache = {}; }
 
   for (const mes of Object.keys(datos)) {
     const d = datos[mes];
@@ -67,17 +70,22 @@ export async function revisarAlertas(datos, userEmail) {
         if (!gasto.diaLimite || !gasto.alertaEmail) continue;
 
         const dias     = diasRestantes(gasto.diaLimite);
-        const alertaId = `${mes}_${sec}_${gasto.nombre}`;
+        // ── CAMBIO: solo alertar si queda 0 o 1 día ──
+        if (dias > 1 || dias < 0) continue;
 
-        // Solo envía si: quedan 0, 1, 2 o 3 días Y no se envió hoy ya
-        if (dias <= 3 && dias >= 0 && cache[alertaId] !== hoy) {
-          try {
-            await enviarAlerta(userEmail, gasto.nombre, dias);
-            cache[alertaId] = hoy;
-            localStorage.setItem(cacheKey, JSON.stringify(cache));
-          } catch (e) {
-            console.error('Error enviando alerta:', e);
-          }
+        // Clave única: incluye el día límite para evitar duplicados si se copia
+        // el mismo gasto en otro mes con el mismo nombre y mismo diaLimite
+        const alertaId = `${sec}_${gasto.nombre}_dia${gasto.diaLimite}`;
+
+        // Si ya se envió hoy este alertaId exacto, no reenviar
+        if (cache[alertaId] === hoy) continue;
+
+        try {
+          await enviarAlerta(userEmail, gasto.nombre, dias);
+          cache[alertaId] = hoy;
+          localStorage.setItem(cacheKey, JSON.stringify(cache));
+        } catch (e) {
+          console.error('Error enviando alerta:', e);
         }
       }
     }

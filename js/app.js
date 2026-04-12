@@ -178,12 +178,31 @@ export function copiarDelMesAnterior() {
   const ant = mesAnterior(mesActual);
   if (!datos[ant]) return alert('No hay datos del mes anterior (' + ant + ')');
   if (!confirm('¿Copiar gastos FIJOS de ' + ant + ' a ' + mesActual + '?')) return;
-  datos[mesActual].fijos = [
-    ...(datos[mesActual].fijos || []),
-    ...JSON.parse(JSON.stringify(datos[ant].fijos || []))
-  ];
+
+  const existentes = datos[mesActual].fijos || [];
+  const porCopiar  = JSON.parse(JSON.stringify(datos[ant].fijos || []));
+
+  // Evitar duplicados: si ya existe un gasto con el mismo nombre y diaLimite, no agregar
+  const nuevos = porCopiar.filter(g => {
+    return !existentes.some(e =>
+      e.nombre === g.nombre && e.diaLimite === g.diaLimite
+    );
+  });
+
+  // Resetear pagado a false (es un mes nuevo), pero conservar alertas y diaLimite
+  const nuevosReset = nuevos.map(g => ({
+    ...g,
+    pagado: false,   // siempre pendiente en el nuevo mes
+    // descripcion, diaLimite y alertaEmail se conservan tal cual
+  }));
+
+  datos[mesActual].fijos = [...existentes, ...nuevosReset];
   autoGuardar();
   renderSeccion(datos, mesActual, 'fijos');
+
+  if (nuevosReset.length === 0) {
+    alert('No hay gastos nuevos que copiar (todos ya existen en este mes).');
+  }
 }
 
 export function exportarCSV() {

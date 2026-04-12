@@ -74,22 +74,6 @@
       <button class="btn-nuevo-mes" onclick="window.abrirNuevoMes()">+ Nuevo mes</button>
     </div>
 
-    <div class="sidebar-metrics">
-      <div class="metric-row">
-        <span class="mlabel">Ingreso total</span>
-        <span class="mval verde" id="t-ingreso">$0</span>
-      </div>
-      <hr class="metric-divider">
-      <div class="metric-row">
-        <span class="mlabel">Total gastos</span>
-        <span class="mval rojo" id="t-gastos">$0</span>
-      </div>
-      <hr class="metric-divider">
-      <div class="metric-row">
-        <span class="mlabel">Saldo</span>
-        <span class="mval" id="t-saldo">$0</span>
-      </div>
-    </div>
 
     <div class="ahorro-bar">
       <div class="ahorro-bar-label">
@@ -345,6 +329,11 @@
     <span class="bnav-icon">💸</span><span>Otros</span><div class="bnav-dot"></div>
   </button>
 </nav>
+
+<!-- Hidden elements needed by recalcular() in ui.js -->
+<span id="t-ingreso" style="display:none"></span>
+<span id="t-gastos"  style="display:none"></span>
+<span id="t-saldo"   style="display:none"></span>
 
 <!-- Entry point -->
 <script type="module" src="js/main.js"></script>
