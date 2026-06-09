@@ -4,6 +4,7 @@
 import { setUserId, cargarTodosLosMeses, guardarMes, eliminarMes } from "./db.js";
 import { poblarSelector, renderIngresos, renderSeccion, recalcular } from "./ui.js";
 import { revisarAlertas } from "./notifications.js";
+import { showAlert, showConfirm, showPrompt } from "./dialogs.js";
 
 // ── Estado ──
 let datos      = {};
@@ -68,13 +69,15 @@ export function delIngreso(i) {
   renderIngresos(datos, mesActual);
 }
 export function agregarIngreso(nombre, monto) {
-  if (!mesActual) return alert('Selecciona un mes primero');
+  if (!mesActual) return showAlert('Selecciona un mes', 'Debes crear o elegir un mes antes de agregar ingresos.', { type: 'warning' });
   datos[mesActual].ingresos.push({ nombre, monto: Number(monto) || 0 });
   autoGuardar();
   renderIngresos(datos, mesActual);
 }
-export function agregarIngresoCustom() {
-  const n = prompt('Nombre del ingreso:');
+export async function agregarIngresoCustom() {
+  const n = await showPrompt('Nuevo ingreso', 'Escribe el nombre del ingreso que quieres agregar.', {
+    placeholder: 'Ej: Freelance, arriendo, devolución',
+  });
   if (!n) return;
   agregarIngreso(n.trim(), 0);
 }
@@ -99,7 +102,7 @@ export function delGasto(sec, i) {
   renderSeccion(datos, mesActual, sec);
 }
 export function addGasto(sec) {
-  if (!mesActual) return alert('Selecciona un mes primero');
+  if (!mesActual) return showAlert('Selecciona un mes', 'Debes crear o elegir un mes antes de agregar gastos.', { type: 'warning' });
   const nom    = document.getElementById('add-' + sec + '-nom');
   const mon    = document.getElementById('add-' + sec + '-mon');
   const nombre = nom.value.trim();
@@ -128,7 +131,7 @@ export function abrirDetalle(sec, i) {
 export function cerrarDetalle() {
   document.getElementById('modal-detalle').style.display = 'none';
 }
-export function guardarDetalle() {
+export async function guardarDetalle() {
   const sec    = document.getElementById('det-sec').value;
   const i      = parseInt(document.getElementById('det-idx').value);
   const desc   = document.getElementById('det-desc').value.trim();
@@ -136,7 +139,7 @@ export function guardarDetalle() {
   const alerta = document.getElementById('det-alerta').checked;
 
   if (dia !== null && (dia < 1 || dia > 31)) {
-    alert('El día debe ser entre 1 y 31'); return;
+    await showAlert('Día inválido', 'El día límite debe estar entre 1 y 31.', { type: 'warning' }); return;
   }
   datos[mesActual][sec][i].descripcion = desc;
   datos[mesActual][sec][i].diaLimite   = dia;
@@ -147,25 +150,33 @@ export function guardarDetalle() {
 }
 
 // ── Nuevo mes ──
-export function abrirNuevoMes() {
+export async function abrirNuevoMes() {
   const ahora = new Date(); const sugeridos = [];
   for (let i = -1; i <= 4; i++) {
     const d = new Date(ahora.getFullYear(), ahora.getMonth() + i, 1);
     const str = formatMes(d);
     if (!datos[str]) sugeridos.push(str);
   }
-  const sel = prompt('Escribe el mes (ej: May 2026)\nDisponibles:\n' + sugeridos.join('\n'));
+  const sel = await showPrompt('Nuevo mes', 'Elige uno de los meses sugeridos o escribe otro con formato Mes YYYY.', {
+    placeholder: 'Ej: May 2026',
+    options: sugeridos,
+    okText: 'Crear mes',
+  });
   if (!sel) return;
   const mes = sel.trim(); const parts = mes.split(' ');
   if (parts.length !== 2 || !MESES.includes(parts[0]) || isNaN(parseInt(parts[1])))
-    return alert('Formato inválido. Usa: Mes YYYY');
+    return showAlert('Formato inválido', 'Usa el formato Mes YYYY. Por ejemplo: May 2026.', { type: 'warning' });
   if (!datos[mes]) datos[mes] = mesVacio();
   guardarMes(mes, datos[mes]).then(() => cargarMes(mes));
 }
 
-export function eliminarMesActual() {
+export async function eliminarMesActual() {
   if (!mesActual) return;
-  if (!confirm(`¿Eliminar "${mesActual}" y todos sus datos?`)) return;
+  const ok = await showConfirm('Eliminar mes', `Se eliminará "${mesActual}" y todos sus datos. Esta acción no se puede deshacer.`, {
+    okText: 'Eliminar',
+    danger: true,
+  });
+  if (!ok) return;
   eliminarMes(mesActual);
   delete datos[mesActual];
   const lista = mesesOrdenados();
@@ -173,11 +184,14 @@ export function eliminarMesActual() {
   else { mesActual = ''; poblarSelector([], ''); }
 }
 
-function copiarGastosDelMesAnterior(sec, nombreSec) {
+async function copiarGastosDelMesAnterior(sec, nombreSec) {
   if (!mesActual) return;
   const ant = mesAnterior(mesActual);
-  if (!datos[ant]) return alert('No hay datos del mes anterior (' + ant + ')');
-  if (!confirm('¿Copiar gastos ' + nombreSec.toUpperCase() + ' de ' + ant + ' a ' + mesActual + '?')) return;
+  if (!datos[ant]) return showAlert('Sin mes anterior', 'No hay datos del mes anterior (' + ant + ').', { type: 'warning' });
+  const ok = await showConfirm('Copiar gastos ' + nombreSec, 'Se copiarán los gastos ' + nombreSec + ' de ' + ant + ' a ' + mesActual + ', evitando duplicados.', {
+    okText: 'Copiar',
+  });
+  if (!ok) return;
 
   const existentes = datos[mesActual][sec] || [];
   const porCopiar  = JSON.parse(JSON.stringify(datos[ant][sec] || []));
@@ -201,7 +215,7 @@ function copiarGastosDelMesAnterior(sec, nombreSec) {
   renderSeccion(datos, mesActual, sec);
 
   if (nuevosReset.length === 0) {
-    alert('No hay gastos nuevos que copiar (todos ya existen en este mes).');
+    showAlert('Nada que copiar', 'No hay gastos nuevos que copiar. Todos ya existen en este mes.', { type: 'info' });
   }
 }
 

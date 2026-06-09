@@ -319,6 +319,27 @@
   </div>
 </div>
 
+<!-- Dialogo visual reutilizable -->
+<div id="modal-dialogo" class="app-dialog" style="display:none">
+  <div class="dialog-box">
+    <div class="dialog-header">
+      <div class="dialog-icon" id="dlg-icon">i</div>
+      <div>
+        <div class="dialog-title" id="dlg-title">Titulo</div>
+        <div class="dialog-message" id="dlg-message">Mensaje</div>
+      </div>
+    </div>
+    <div class="dialog-options" id="dlg-options"></div>
+    <div class="dialog-input-wrap" id="dlg-input-wrap">
+      <input class="dialog-input" id="dlg-input" type="text">
+    </div>
+    <div class="dialog-footer">
+      <button class="btn-dialog-cancel" id="dlg-cancel" type="button">Cancelar</button>
+      <button class="btn-dialog-ok" id="dlg-ok" type="button">Aceptar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Bottom nav móvil -->
 <nav class="bottom-nav" id="bottom-nav" style="display:none">
   <button class="bnav-item active" id="bnav-resumen" onclick="window.switchMobTab('resumen')">
