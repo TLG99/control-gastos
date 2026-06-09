@@ -173,14 +173,14 @@ export function eliminarMesActual() {
   else { mesActual = ''; poblarSelector([], ''); }
 }
 
-export function copiarDelMesAnterior() {
+function copiarGastosDelMesAnterior(sec, nombreSec) {
   if (!mesActual) return;
   const ant = mesAnterior(mesActual);
   if (!datos[ant]) return alert('No hay datos del mes anterior (' + ant + ')');
-  if (!confirm('¿Copiar gastos FIJOS de ' + ant + ' a ' + mesActual + '?')) return;
+  if (!confirm('¿Copiar gastos ' + nombreSec.toUpperCase() + ' de ' + ant + ' a ' + mesActual + '?')) return;
 
-  const existentes = datos[mesActual].fijos || [];
-  const porCopiar  = JSON.parse(JSON.stringify(datos[ant].fijos || []));
+  const existentes = datos[mesActual][sec] || [];
+  const porCopiar  = JSON.parse(JSON.stringify(datos[ant][sec] || []));
 
   // Evitar duplicados: si ya existe un gasto con el mismo nombre y diaLimite, no agregar
   const nuevos = porCopiar.filter(g => {
@@ -196,13 +196,21 @@ export function copiarDelMesAnterior() {
     // descripcion, diaLimite y alertaEmail se conservan tal cual
   }));
 
-  datos[mesActual].fijos = [...existentes, ...nuevosReset];
+  datos[mesActual][sec] = [...existentes, ...nuevosReset];
   autoGuardar();
-  renderSeccion(datos, mesActual, 'fijos');
+  renderSeccion(datos, mesActual, sec);
 
   if (nuevosReset.length === 0) {
     alert('No hay gastos nuevos que copiar (todos ya existen en este mes).');
   }
+}
+
+export function copiarDelMesAnterior() {
+  copiarGastosDelMesAnterior('fijos', 'fijos');
+}
+
+export function copiarVariosDelMesAnterior() {
+  copiarGastosDelMesAnterior('varios', 'varios');
 }
 
 export function exportarCSV() {
@@ -245,6 +253,7 @@ window.addGasto             = addGasto;
 window.abrirNuevoMes        = abrirNuevoMes;
 window.eliminarMesActual    = eliminarMesActual;
 window.copiarDelMesAnterior = copiarDelMesAnterior;
+window.copiarVariosDelMesAnterior = copiarVariosDelMesAnterior;
 window.exportarCSV          = exportarCSV;
 window.abrirDetalle         = abrirDetalle;
 window.cerrarDetalle        = cerrarDetalle;

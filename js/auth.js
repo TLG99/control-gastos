@@ -30,6 +30,7 @@ export function initAuth() {
       document.getElementById('login-screen').style.display   = 'none';
       document.getElementById('main-app').style.display       = 'flex';
       document.getElementById('sync-status').style.display    = 'flex';
+      document.getElementById('theme-toggle').style.display   = 'inline-flex';
       document.getElementById('bottom-nav').style.display     = 'flex';
       document.getElementById('user-email-label').textContent = user.email;
       // Pasamos uid Y email para las alertas
@@ -38,6 +39,7 @@ export function initAuth() {
       document.getElementById('login-screen').style.display = 'flex';
       document.getElementById('main-app').style.display     = 'none';
       document.getElementById('sync-status').style.display  = 'none';
+      document.getElementById('theme-toggle').style.display = 'none';
       document.getElementById('bottom-nav').style.display   = 'none';
       document.getElementById('login-btn').disabled         = false;
       document.getElementById('login-btn').textContent      = 'Entrar';

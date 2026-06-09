@@ -23,6 +23,22 @@
   --bottomnav: 60px;
 }
 
+body.theme-dark {
+  --bg:        #0B1220;
+  --surface:   #111827;
+  --border:    #263244;
+  --text:      #F2F4F7;
+  --muted:     #98A2B3;
+  --faint:     #182230;
+  --green-bg:  #053321;
+  --green-txt: #75E0A7;
+  --red-bg:    #55160C;
+  --red-txt:   #FDA29B;
+  --amber-bg:  #4E1D09;
+  --amber-txt: #FDB022;
+  --accent-bg: #1D2B7A;
+}
+
 /* ══════════════════════════════════════
    RESET & BASE
 ══════════════════════════════════════ */
@@ -55,6 +71,8 @@ input, button, select { font-family: inherit; font-size: 14px; }
 #sync-status.ok      { background: var(--green-bg); color: var(--green-txt); }
 #sync-status.error   { background: var(--red-bg);   color: var(--red-txt); }
 .sync-dot { width: 6px; height: 6px; border-radius: 99px; background: currentColor; }
+.theme-toggle { position: fixed; top: 12px; right: 136px; z-index: 200; min-height: 24px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; box-shadow: 0 8px 20px rgba(16,24,40,.08); transition: background .2s, border-color .2s, color .2s; }
+.theme-toggle:hover { background: var(--faint); }
 
 /* ══════════════════════════════════════
    LAYOUT
@@ -156,6 +174,7 @@ input, button, select { font-family: inherit; font-size: 14px; }
 .gi-nombre:focus { outline: none; background: var(--faint); box-shadow: 0 0 0 2px var(--border); }
 .gi-monto { width: 100px; border: 1px solid var(--border); padding: 5px 8px; text-align: right; background: var(--faint); border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text); flex-shrink: 0; }
 .gi-monto:focus { outline: none; border-color: var(--accent); background: #fff; }
+body.theme-dark .gi-monto:focus { background: var(--surface); }
 
 /* Badge días restantes */
 .badge-dias { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; }
@@ -199,6 +218,7 @@ input, button, select { font-family: inherit; font-size: 14px; }
 .modal-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; display: block; margin-bottom: 6px; }
 .modal-input { width: 100%; border: 1px solid var(--border); padding: 9px 12px; border-radius: 8px; background: var(--faint); color: var(--text); font-size: 13px; }
 .modal-input:focus { outline: none; border-color: var(--accent); background: #fff; }
+body.theme-dark .modal-input:focus { background: var(--surface); }
 .modal-textarea { resize: vertical; min-height: 72px; }
 .modal-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
 .modal-check-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--faint); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
@@ -220,6 +240,7 @@ input, button, select { font-family: inherit; font-size: 14px; }
 
 @media (max-width: 768px) {
   #sync-status { top: auto; bottom: calc(var(--bottomnav) + 8px); right: 12px; font-size: 10px; padding: 3px 8px; }
+  .theme-toggle { top: auto; bottom: calc(var(--bottomnav) + 8px); right: 112px; min-height: 22px; font-size: 10px; padding: 3px 8px; }
   .sidebar { display: none; }
   .main    { margin-left: 0; padding: 0 0 calc(var(--bottomnav) + 8px); }
   .mobile-topbar { display: flex; align-items: center; justify-content: space-between; background: #1D2939; color: #fff; padding: 12px 16px; position: sticky; top: 0; z-index: 50; }

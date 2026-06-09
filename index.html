@@ -41,6 +41,7 @@
 <!-- ══════════════════════════════════════
      SYNC INDICATOR
 ══════════════════════════════════════ -->
+<button id="theme-toggle" class="theme-toggle" style="display:none" onclick="window.toggleTheme()" title="Cambiar a modo oscuro">Modo oscuro</button>
 <div id="sync-status" class="ok" style="display:none">
   <div class="sync-dot"></div>
   <span id="sync-txt">Sincronizado</span>
@@ -98,6 +99,9 @@
     <div class="sidebar-footer">
       <button class="btn-action" onclick="window.copiarDelMesAnterior()">
         <span class="btn-action-icon">↩</span> Copiar fijos del mes anterior
+      </button>
+      <button class="btn-action" onclick="window.copiarVariosDelMesAnterior()">
+        <span class="btn-action-icon">↩</span> Copiar varios del mes anterior
       </button>
       <button class="btn-action" onclick="window.exportarCSV()">
         <span class="btn-action-icon">↓</span> Exportar CSV
@@ -264,6 +268,7 @@
       <button class="mob-nuevo-mes" onclick="window.abrirNuevoMes()">+ Nuevo mes</button>
       <div class="mob-acciones">
         <button class="btn-action" onclick="window.copiarDelMesAnterior()"><span class="btn-action-icon">↩</span> Copiar fijos del mes anterior</button>
+        <button class="btn-action" onclick="window.copiarVariosDelMesAnterior()"><span class="btn-action-icon">↩</span> Copiar varios del mes anterior</button>
         <button class="btn-action" onclick="window.exportarCSV()"><span class="btn-action-icon">↓</span> Exportar CSV</button>
         <button class="btn-del-mes" onclick="window.eliminarMesActual()">Eliminar mes</button>
       </div>
