@@ -3,7 +3,6 @@
 
 import { setUserId, cargarTodosLosMeses, guardarMes, eliminarMes } from "./db.js";
 import { poblarSelector, renderIngresos, renderSeccion, recalcular } from "./ui.js";
-import { revisarAlertas } from "./notifications.js";
 import { showAlert, showConfirm, showPrompt } from "./dialogs.js";
 
 // ── Estado ──
@@ -109,7 +108,7 @@ export function addGasto(sec) {
   if (!nombre) { nom.focus(); return; }
   datos[mesActual][sec].push({
     nombre, monto: Number(mon.value) || 0,
-    pagado: false, descripcion: '', diaLimite: null, alertaEmail: false
+    pagado: false, descripcion: '', diaLimite: null
   });
   nom.value = ''; mon.value = '';
   autoGuardar();
@@ -123,7 +122,6 @@ export function abrirDetalle(sec, i) {
   document.getElementById('det-titulo').textContent  = g.nombre;
   document.getElementById('det-desc').value          = g.descripcion  || '';
   document.getElementById('det-dia').value           = g.diaLimite    || '';
-  document.getElementById('det-alerta').checked      = g.alertaEmail  || false;
   document.getElementById('det-sec').value           = sec;
   document.getElementById('det-idx').value           = i;
   document.getElementById('modal-detalle').style.display = 'flex';
@@ -136,14 +134,11 @@ export async function guardarDetalle() {
   const i      = parseInt(document.getElementById('det-idx').value);
   const desc   = document.getElementById('det-desc').value.trim();
   const dia    = parseInt(document.getElementById('det-dia').value) || null;
-  const alerta = document.getElementById('det-alerta').checked;
-
   if (dia !== null && (dia < 1 || dia > 31)) {
     await showAlert('Día inválido', 'El día límite debe estar entre 1 y 31.', { type: 'warning' }); return;
   }
   datos[mesActual][sec][i].descripcion = desc;
   datos[mesActual][sec][i].diaLimite   = dia;
-  datos[mesActual][sec][i].alertaEmail = alerta;
   autoGuardar();
   renderSeccion(datos, mesActual, sec);
   cerrarDetalle();
@@ -251,7 +246,6 @@ export async function initApp(uid, email) {
   datos = await cargarTodosLosMeses();
   const lista = mesesOrdenados();
   if (lista.length) cargarMes(lista[lista.length - 1]);
-  revisarAlertas(datos, userEmail).catch(console.error);
 }
 
 export function resetApp() {
