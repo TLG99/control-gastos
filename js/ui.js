@@ -55,7 +55,11 @@ export function renderIngresos(datos, mesActual) {
 // ── Sección de gastos ──
 export function renderSeccion(datos, mesActual, sec) {
   const lista = datos[mesActual][sec] || [];
-  document.getElementById('lista-' + sec).innerHTML = lista.map((g, i) => `
+  // Pendientes primero, pagados al fondo — índice original se conserva para edición
+  const ordenados = lista
+    .map((g, i) => ({ g, i }))
+    .sort((a, b) => (a.g.pagado ? 1 : 0) - (b.g.pagado ? 1 : 0));
+  document.getElementById('lista-' + sec).innerHTML = ordenados.map(({ g, i }) => `
     <div class="gasto-item" style="${g.pagado ? 'opacity:.45' : ''}">
       <input class="gi-nombre" type="text" value="${escHtml(g.nombre)}"
         style="${g.pagado ? 'text-decoration:line-through' : ''}"
@@ -70,6 +74,30 @@ export function renderSeccion(datos, mesActual, sec) {
         title="${g.pagado ? 'Marcar pendiente' : 'Marcar pagado'}">✓</button>
       <button class="btn-del-item" onclick="window._delGas('${sec}', ${i})">×</button>
     </div>`).join('');
+}
+
+// ── Banner de pagos próximos ──
+export function renderPagosProximos(datos, mesActual) {
+  const el = document.getElementById('pagos-proximos');
+  if (!el || !mesActual || !datos[mesActual]) { if (el) el.innerHTML = ''; return; }
+  const d = datos[mesActual];
+  const proximos = [];
+  for (const sec of ['fijos', 'varios', 'otros']) {
+    for (const g of (d[sec] || [])) {
+      if (!g.diaLimite || g.pagado) continue;
+      const dias = diasRestantes(g.diaLimite);
+      if (dias > 7 || dias < 0) continue;
+      proximos.push({ nombre: g.nombre, dias });
+    }
+  }
+  proximos.sort((a, b) => a.dias - b.dias);
+  if (!proximos.length) { el.innerHTML = ''; return; }
+  const items = proximos.map(p => {
+    const color = p.dias <= 1 ? 'red' : p.dias <= 3 ? 'amber' : 'muted';
+    const txt   = p.dias === 0 ? '¡Hoy!' : p.dias === 1 ? 'mañana' : `${p.dias} días`;
+    return `<span class="pp-item pp-${color}"><span class="pp-nombre">${escHtml(p.nombre)}</span><span class="pp-dias">${txt}</span></span>`;
+  }).join('');
+  el.innerHTML = `<div class="pagos-proximos-bar"><span class="pp-label">Vencimientos próximos</span><div class="pp-list">${items}</div></div>`;
 }
 
 // ── Recalcular totales ──

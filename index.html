@@ -163,6 +163,9 @@
       </div>
     </div>
 
+    <!-- Pagos próximos -->
+    <div id="pagos-proximos"></div>
+
     <!-- Panel header -->
     <div class="panel-header">
       <div>
@@ -283,7 +286,10 @@
 <div id="modal-detalle">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="modal-titulo" id="det-titulo">Detalle</span>
+      <div class="modal-header-left">
+        <span class="modal-titulo" id="det-titulo">Detalle</span>
+        <span class="modal-pagado-badge" id="det-pagado-badge" style="display:none">Pagado</span>
+      </div>
       <button class="btn-modal-close" onclick="window.cerrarDetalle()">×</button>
     </div>
 

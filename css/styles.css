@@ -199,6 +199,19 @@ body.theme-dark .gi-monto:focus { background: var(--surface); }
 .btn-add-item:hover { background: #3538CD; }
 
 /* ══════════════════════════════════════
+   PAGOS PRÓXIMOS
+══════════════════════════════════════ */
+.pagos-proximos-bar { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.pp-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; flex-shrink: 0; }
+.pp-list { display: flex; gap: 8px; flex-wrap: wrap; }
+.pp-item { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
+.pp-red   { background: var(--red-bg);   color: var(--red-txt);   }
+.pp-amber { background: var(--amber-bg); color: var(--amber-txt); }
+.pp-muted { background: var(--faint);    color: var(--muted);     border: 1px solid var(--border); }
+.pp-nombre { }
+.pp-dias { opacity: .75; }
+
+/* ══════════════════════════════════════
    MODAL DETALLE
 ══════════════════════════════════════ */
 #modal-detalle {
@@ -211,7 +224,9 @@ body.theme-dark .gi-monto:focus { background: var(--surface); }
   box-shadow: 0 20px 40px rgba(0,0,0,.15);
 }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-header-left { display: flex; align-items: center; gap: 10px; }
 .modal-titulo { font-size: 16px; font-weight: 700; color: var(--text); }
+.modal-pagado-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; background: var(--green-bg); color: var(--green-txt); }
 .btn-modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; line-height: 1; padding: 0 4px; }
 .btn-modal-close:hover { color: var(--text); }
 .modal-field { margin-bottom: 16px; }

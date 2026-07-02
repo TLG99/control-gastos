@@ -2,7 +2,7 @@
 // Estado central y lógica de negocio
 
 import { setUserId, cargarTodosLosMeses, guardarMes, eliminarMes } from "./db.js";
-import { poblarSelector, renderIngresos, renderSeccion, recalcular } from "./ui.js";
+import { poblarSelector, renderIngresos, renderSeccion, recalcular, renderPagosProximos } from "./ui.js";
 import { showAlert, showConfirm, showPrompt } from "./dialogs.js";
 
 // ── Estado ──
@@ -34,6 +34,7 @@ export function mesVacio() {
 
 function autoGuardar() {
   recalcular(datos, mesActual);
+  renderPagosProximos(datos, mesActual);
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => guardarMes(mesActual, datos[mesActual]), 1200);
 }
@@ -48,6 +49,7 @@ export function cargarMes(mes) {
   renderSeccion(datos, mesActual, 'varios');
   renderSeccion(datos, mesActual, 'otros');
   recalcular(datos, mesActual);
+  renderPagosProximos(datos, mesActual);
 }
 
 export function navMes(dir) {
@@ -124,6 +126,8 @@ export function abrirDetalle(sec, i) {
   document.getElementById('det-dia').value           = g.diaLimite    || '';
   document.getElementById('det-sec').value           = sec;
   document.getElementById('det-idx').value           = i;
+  const badge = document.getElementById('det-pagado-badge');
+  badge.style.display = g.pagado ? 'inline-flex' : 'none';
   document.getElementById('modal-detalle').style.display = 'flex';
 }
 export function cerrarDetalle() {
@@ -202,7 +206,7 @@ async function copiarGastosDelMesAnterior(sec, nombreSec) {
   const nuevosReset = nuevos.map(g => ({
     ...g,
     pagado: false,   // siempre pendiente en el nuevo mes
-    // descripcion, diaLimite y alertaEmail se conservan tal cual
+    // descripcion y diaLimite se conservan tal cual
   }));
 
   datos[mesActual][sec] = [...existentes, ...nuevosReset];
