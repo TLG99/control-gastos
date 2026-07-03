@@ -176,9 +176,6 @@ input, button, select { font-family: inherit; font-size: 14px; }
 .gi-monto:focus { outline: none; border-color: var(--accent); background: #fff; }
 body.theme-dark .gi-monto:focus { background: var(--surface); }
 
-/* Badge días restantes */
-.badge-dias { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; }
-
 /* Punto de descripción */
 .desc-dot { font-size: 8px; color: var(--accent); flex-shrink: 0; cursor: default; }
 
@@ -201,15 +198,17 @@ body.theme-dark .gi-monto:focus { background: var(--surface); }
 /* ══════════════════════════════════════
    PAGOS PRÓXIMOS
 ══════════════════════════════════════ */
-.pagos-proximos-bar { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; flex-wrap: wrap; }
-.pp-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; flex-shrink: 0; }
-.pp-list { display: flex; gap: 8px; flex-wrap: wrap; }
-.pp-item { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
+.pagos-proximos-bar { display: flex; align-items: center; gap: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin-bottom: 24px; flex-wrap: wrap; }
+.pp-label { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; flex-shrink: 0; }
+.pp-list { display: flex; gap: 10px; flex-wrap: wrap; }
+.pp-item { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 99px; }
 .pp-red   { background: var(--red-bg);   color: var(--red-txt);   }
 .pp-amber { background: var(--amber-bg); color: var(--amber-txt); }
 .pp-muted { background: var(--faint);    color: var(--muted);     border: 1px solid var(--border); }
+.pp-overdue { background: var(--red); color: #fff; }
 .pp-nombre { }
 .pp-dias { opacity: .75; }
+.pp-overdue .pp-dias { opacity: .9; }
 
 /* ══════════════════════════════════════
    MODAL DETALLE

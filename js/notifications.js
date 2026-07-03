@@ -16,20 +16,19 @@ export function initEmailJS() {
   });
 }
 
-// ── Calcular días restantes hasta el día N del mes actual ──
-export function diasRestantes(diaLimite) {
-  const hoy   = new Date();
-  const anio  = hoy.getFullYear();
-  const mes   = hoy.getMonth();
-  let limite  = new Date(anio, mes, diaLimite);
+const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
-  // Si ya pasó este mes, apunta al mes siguiente
-  if (limite < hoy) {
-    limite = new Date(anio, mes + 1, diaLimite);
-  }
+// ── Calcular días restantes hasta el día N del mes del gasto ──
+// Negativo = ya pasó el día límite (atrasado).
+export function diasRestantes(mes, diaLimite) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const [nombreMes, anio] = mes.split(' ');
+  const limite = new Date(parseInt(anio), MESES.indexOf(nombreMes), diaLimite);
 
   const diff = limite - hoy;
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.round(diff / (1000 * 60 * 60 * 24));
 }
 
 // ── Construir mensaje según días restantes ──
@@ -69,7 +68,7 @@ export async function revisarAlertas(datos, userEmail) {
       for (const gasto of (d[sec] || [])) {
         if (!gasto.diaLimite || !gasto.alertaEmail) continue;
 
-        const dias     = diasRestantes(gasto.diaLimite);
+        const dias     = diasRestantes(mes, gasto.diaLimite);
         // ── CAMBIO: solo alertar si queda 0 o 1 día ──
         if (dias > 1 || dias < 0) continue;
 

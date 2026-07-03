@@ -8,16 +8,6 @@ export function escHtml(s) {
   return String(s).replace(/"/g, '&quot;');
 }
 
-// ── Badge de días restantes ──
-function badgeDias(gasto) {
-  if (!gasto.diaLimite) return '';
-  const dias = diasRestantes(gasto.diaLimite);
-  if (dias > 7) return '';
-  const color = dias <= 1 ? '#F04438' : dias <= 3 ? '#F79009' : '#667085';
-  const txt   = dias === 0 ? '¡Hoy!' : dias === 1 ? '1 día' : `${dias} días`;
-  return `<span class="badge-dias" style="background:${color}15;color:${color};border:1px solid ${color}40">${txt}</span>`;
-}
-
 // ── Indicador de descripción ──
 function dotDesc(gasto) {
   return gasto.descripcion
@@ -65,7 +55,6 @@ export function renderSeccion(datos, mesActual, sec) {
         style="${g.pagado ? 'text-decoration:line-through' : ''}"
         onchange="window._setNom('${sec}', ${i}, this.value)">
       ${dotDesc(g)}
-      ${badgeDias(g)}
       <input class="gi-monto" type="number" value="${g.monto}"
         oninput="window._setMon('${sec}', ${i}, this.value)">
       <button class="btn-dots" onclick="window._detalle('${sec}', ${i})" title="Ver detalle">···</button>
@@ -85,16 +74,19 @@ export function renderPagosProximos(datos, mesActual) {
   for (const sec of ['fijos', 'varios', 'otros']) {
     for (const g of (d[sec] || [])) {
       if (!g.diaLimite || g.pagado) continue;
-      const dias = diasRestantes(g.diaLimite);
-      if (dias > 7 || dias < 0) continue;
+      const dias = diasRestantes(mesActual, g.diaLimite);
+      if (dias > 7) continue;
       proximos.push({ nombre: g.nombre, dias });
     }
   }
   proximos.sort((a, b) => a.dias - b.dias);
   if (!proximos.length) { el.innerHTML = ''; return; }
   const items = proximos.map(p => {
-    const color = p.dias <= 1 ? 'red' : p.dias <= 3 ? 'amber' : 'muted';
-    const txt   = p.dias === 0 ? '¡Hoy!' : p.dias === 1 ? 'mañana' : `${p.dias} días`;
+    const color = p.dias < 0 ? 'overdue' : p.dias <= 1 ? 'red' : p.dias <= 3 ? 'amber' : 'muted';
+    const txt   = p.dias < 0 ? `${Math.abs(p.dias)} ${Math.abs(p.dias) === 1 ? 'día' : 'días'} de atraso`
+                : p.dias === 0 ? 'Hoy'
+                : p.dias === 1 ? 'mañana'
+                : `${p.dias} días`;
     return `<span class="pp-item pp-${color}"><span class="pp-nombre">${escHtml(p.nombre)}</span><span class="pp-dias">${txt}</span></span>`;
   }).join('');
   el.innerHTML = `<div class="pagos-proximos-bar"><span class="pp-label">Vencimientos próximos</span><div class="pp-list">${items}</div></div>`;
