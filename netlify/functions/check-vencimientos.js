@@ -57,12 +57,17 @@ exports.handler = async function () {
 
   console.log(`[check-vencimientos] hoy=${hoy.toISOString()} mesActual="${mesActual}" diaHoy=${diaHoy} fechaId=${fechaId}`);
 
-  const usuariosSnap = await db.collection('usuarios').get();
-  console.log(`[check-vencimientos] usuarios encontrados: ${usuariosSnap.size}`);
+  // Los usuarios se listan desde Firebase Auth: la colección "usuarios" en
+  // Firestore no tiene documentos reales en la raíz (solo existen las
+  // subcolecciones usuarios/{uid}/meses/*), así que una query directa a
+  // esa colección siempre devuelve 0.
+  const { users } = await admin.auth().listUsers(1000);
+  console.log(`[check-vencimientos] usuarios encontrados: ${users.length}`);
   let enviados = 0;
 
-  for (const userDoc of usuariosSnap.docs) {
-    const uid = userDoc.id;
+  for (const userRecord of users) {
+    const uid   = userRecord.uid;
+    const email = userRecord.email;
 
     const marcaRef  = db.doc(`usuarios/${uid}/notificaciones/${fechaId}`);
     const yaEnviado = await marcaRef.get();
@@ -87,14 +92,10 @@ exports.handler = async function () {
     console.log(`[check-vencimientos] uid=${uid} items con diaLimite=${diaHoy} y sin pagar: ${vencenHoy.length} (${vencenHoy.map(g => `${g.nombre}[diaLimite=${JSON.stringify(g.diaLimite)}]`).join(', ')})`);
     if (!vencenHoy.length) continue;
 
-    let email;
-    try {
-      email = (await admin.auth().getUser(uid)).email;
-    } catch (e) {
-      console.log(`[check-vencimientos] uid=${uid} no se pudo obtener email de Auth: ${e.message}`);
+    if (!email) {
+      console.log(`[check-vencimientos] uid=${uid} no tiene email en Auth, se salta`);
       continue;
     }
-    if (!email) continue;
 
     try {
       await enviarEmail(email, vencenHoy);
