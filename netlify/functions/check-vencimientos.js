@@ -55,7 +55,10 @@ exports.handler = async function () {
   const diaHoy     = hoy.getDate();
   const fechaId    = hoy.toISOString().slice(0, 10);
 
+  console.log(`[check-vencimientos] hoy=${hoy.toISOString()} mesActual="${mesActual}" diaHoy=${diaHoy} fechaId=${fechaId}`);
+
   const usuariosSnap = await db.collection('usuarios').get();
+  console.log(`[check-vencimientos] usuarios encontrados: ${usuariosSnap.size}`);
   let enviados = 0;
 
   for (const userDoc of usuariosSnap.docs) {
@@ -63,10 +66,16 @@ exports.handler = async function () {
 
     const marcaRef  = db.doc(`usuarios/${uid}/notificaciones/${fechaId}`);
     const yaEnviado = await marcaRef.get();
-    if (yaEnviado.exists) continue;
+    if (yaEnviado.exists) {
+      console.log(`[check-vencimientos] uid=${uid} ya tiene marca de hoy, se salta`);
+      continue;
+    }
 
     const mesSnap = await db.doc(`usuarios/${uid}/meses/${mesActual}`).get();
-    if (!mesSnap.exists) continue;
+    if (!mesSnap.exists) {
+      console.log(`[check-vencimientos] uid=${uid} no tiene documento para mes "${mesActual}"`);
+      continue;
+    }
     const data = mesSnap.data();
 
     const vencenHoy = [];
@@ -75,12 +84,14 @@ exports.handler = async function () {
         if (g.diaLimite === diaHoy && !g.pagado) vencenHoy.push(g);
       }
     }
+    console.log(`[check-vencimientos] uid=${uid} items con diaLimite=${diaHoy} y sin pagar: ${vencenHoy.length} (${vencenHoy.map(g => `${g.nombre}[diaLimite=${JSON.stringify(g.diaLimite)}]`).join(', ')})`);
     if (!vencenHoy.length) continue;
 
     let email;
     try {
       email = (await admin.auth().getUser(uid)).email;
-    } catch {
+    } catch (e) {
+      console.log(`[check-vencimientos] uid=${uid} no se pudo obtener email de Auth: ${e.message}`);
       continue;
     }
     if (!email) continue;
@@ -92,8 +103,9 @@ exports.handler = async function () {
         items:   vencenHoy.map(g => g.nombre),
       });
       enviados++;
+      console.log(`[check-vencimientos] correo enviado a ${email}`);
     } catch (e) {
-      console.error(`Error enviando a ${email}:`, e.message);
+      console.error(`[check-vencimientos] Error enviando a ${email}:`, e.message);
     }
   }
 
